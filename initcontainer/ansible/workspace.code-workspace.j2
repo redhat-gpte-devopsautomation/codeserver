@@ -1,0 +1,12 @@
+{
+	"folders": [
+{% if code_repos_list | default("") | length > 0 %}
+{%   for repository in code_repos_list %}
+		{
+			"path": "/home/codeserver/{{ repository.name }}"
+		}{% if loop.index < loop.length %},{% endif %}
+{%   endfor %}
+{% endif %}
+	],
+	"settings": {}
+}

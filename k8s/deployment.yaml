@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: codeserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      deployment: codeserver
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        deployment: codeserver
+    spec:
+      initContainers:
+      - name: setup
+        image: quay.io/gpte-devops-automation/codeserver-init:latest
+        imagePullPolicy: Always
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - name: codeserver-volume
+          mountPath: /home/codeserver
+        env:
+        - name: CODE_WORKSPACE_NAME
+          value: "AppModernization"
+        - name: CODE_REPOS_LIST
+          value: '[{"name":"app-mod-project","url":"https://user1:openshift@gitea.apps.cluster-wkams.wkams.devel.opentlc.com/user1/app-mod-projects.git","branch":"main"}]'
+        - name: CODE_PASSWORD
+          value: openshift
+        - name: CODE_EXTENSIONS_LIST
+          value: '[{"filename":"auchenberg.vscode-browser-preview-0.7.2.vsix", "url": "https://gpte-public.s3.amazonaws.com/vscode-plugins/auchenberg.vscode-browser-preview-0.7.2.vsix"}]'
+      containers:
+      - name: codeserver
+        image: quay.io/gpte-devops-automation/codeserver:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - name: codeserver-volume
+          mountPath: /home/codeserver
+      restartPolicy: Always
+      volumes:
+      - name: codeserver-volume
+        persistentVolumeClaim:
+          claimName: codeserver

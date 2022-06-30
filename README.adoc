@@ -1,0 +1,61 @@
+= Code Server OpenShift Container
+
+This repository contains the source code for a code server (https://coder.com/docs/code-server/latest) container configured for Red Hat OpenShift Container Platform.
+
+It also contains the Kubernetes resource files necessary to deploy a code server to an OpenShift cluster.
+
+This repository contains two containers sharing a Persistent Volume Claim for storage:
+
+* The *Main Container* (the VSCode container): this container is configured with
+** Code Server
+** OpenJDK 11
+** git
+** Maven
+** Google Chrome (headless, necessary for the browser preview extension)
+* The *Init Container*. This container is run only once when the application is started for the first time. It will set up the code server environment. The init container uses the following environment variables:
+** *CODE_WORKSPACE_NAME*: The name of the workspace to create for code server (Lower and uppercase letters are allowed, no spaces allowed)
++
+[source,yaml]
+----
+- name: CODE_WORKSPACE_NAME
+  value: MyWorkspace
+----
+** *CODE_PASSWORD*: The password for the code server. If no password is specified a 16 character random password is generated and can be retrieved by examining the init container's log
++
+.Example
+[source,yaml]
+----
+- name: CODE_PASSWORD
+  value: my_super_secret_password
+----
+** *CODE_REPO_LIST*: A JSON list of repositories to clone into the environment. For private repositories encode the userid and password in the repository URL.
+
++
+.Example
+[source,yaml]
+----
+- name: CODE_REPO_LIST:
+  value: '[{"name":"app-mod-projects","url":"https://user1:openshift@gitea.apps.cluster-wkams.wkams.devel.opentlc.com/user1/app-mod-projects.git","branch":"main"}, {"name":"codeserver","url":"https://github.com/redhat-gpte-devopsautomation/codeserver.git","branch":"main"}]'
+----
+
+** *CODE_EXTENSIONS_LIST*: a JSON list of extensions to be installed in code server. URL should contain the full download path.
++
+.Example
+[source,yaml]
+----
+- name: CODE_EXTENSIONS_LIST
+  value: '[{"filename":"auchenberg.vscode-browser-preview-0.7.2.vsix", "url": "https://gpte-public.s3.amazonaws.com/vscode-plugins/auchenberg.vscode-browser-preview-0.7.2.vsix"}]'
+----
+
+== Building
+
+To build each container image a `build.sh` shell script is provided in the respective subdirectory. Adjust the script with your registry URL, log into your registry and simply run the build script. Note that the build script uses `podman` but it should also work with `docker`.
+
+== Deploying
+
+The `k8s` directory has OpenShift manifests that can be applied to your cluster.
+
+. Adjust the variables in the file `deployment.yaml` to match your desired configuration.
+. Adjust the image locations in the file `deployment.yaml` to match your container registry.
+. Create a namespace to run code server in
+. Use `oc apply -k k8s -n <yournamespace>` to deploy the application

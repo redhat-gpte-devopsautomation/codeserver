@@ -1,0 +1,132 @@
+---
+- name: Set up code server
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+  - name: Set facts from environment variables
+    ansible.builtin.set_fact:
+      code_workspace_name: "{{ lookup('ansible.builtin.env', 'CODE_WORKSPACE_NAME') | default('Workspace') }}"
+      code_password: "{{ lookup('ansible.builtin.env', 'CODE_PASSWORD') | default('password') }}"
+      code_repos_list: "{{ lookup('ansible.builtin.env', 'CODE_REPOS_LIST') | default('') }}"
+      code_extensions_list: "{{ lookup('ansible.builtin.env', 'CODE_EXTENSIONS_LIST') | default('') }}"
+
+  - name: Generate code server password if no password specified
+    when: code_password | default('') | length == 0
+    ansible.builtin.set_fact:
+      code_password: >-
+        {{ lookup('password', '/dev/null length=16 chars=ascii_letters,digits') }}
+
+  - name: Print passed environment variables
+    ansible.builtin.debug:
+      msg: "{{ item }}"
+    loop:
+    - "Code Workspace Name: {{ code_workspace_name }}"
+    - "Code Pwd: {{ code_password }}"
+    - "Repos List: {{ code_repos_list }}"
+    - "Code Extensions List: {{ code_extensions_list }}"
+
+  - name: Check if initialization is necessary
+    ansible.builtin.stat:
+      path: "/home/codeserver/.init_complete"
+    register: r_init_complete
+
+  - name: Only set up if init has not been done
+    when: not r_init_complete.stat.exists
+    block:
+
+    - name: Create directories
+      ansible.builtin.file:
+        state: directory
+        path: "{{ item }}"
+        owner: codeserver
+        group: root
+        mode: 0770
+      loop:
+      - "/home/codeserver/.config"
+      - "/home/codeserver/.config/code-server"
+      - "/home/codeserver/.local"
+      - "/home/codeserver/.local/share"
+      - "/home/codeserver/.local/share/code-server"
+      - "/home/codeserver/.local/share/code-server/extensions"
+      - "/home/codeserver/.local/share/code-server/User"
+      - "/home/codeserver/.local/share/code-server/User/Workspaces"
+
+    - name: Set up .gitconfig
+      ansible.builtin.copy:
+        src: gitconfig
+        dest: "~/.gitconfig"
+        owner: codeserver
+        group: root
+        mode: 0664
+
+    - name: Setup Git Repos
+      when: code_repos_list | default("") | length > 0
+      block:
+      - name: Print Repos
+        debug:
+          msg: "name: {{ item.name }}, url: {{ item.url }}, branch: {{ item.branch }}"
+        loop: "{{ code_repos_list | list }}"
+
+      - name: Clone Repos
+        ansible.builtin.git:
+          accept_hostkey: true
+          force: true
+          repo: "{{ item.url }}"
+          dest: "/home/codeserver/{{ item.name }}"
+          version: "{{ item.branch }}"
+        loop: "{{ code_repos_list | list }}"
+
+    - name: Setup code server config files
+      ansible.builtin.template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        owner: codeserver
+        group: root
+        mode: 0664
+      loop:
+      - src: ./code-server-config.yaml.j2
+        dest: "/home/codeserver/.config/code-server/config.yaml"
+      - src: ./code-server-coder.json.j2
+        dest: "/home/codeserver/.local/share/code-server/coder.json"
+      - src: ./workspace.code-workspace.j2
+        dest: "/home/codeserver/.local/share/code-server/User/Workspaces/{{ code_workspace_name }}.code-workspace"
+
+    - name: Copy VSCode User configuration file
+      ansible.builtin.copy:
+        src: user_settings.json
+        dest: "/home/codeserver/.local/share/code-server/User/settings.json"
+        owner: codeserver
+        group: root
+        mode: 0664
+
+    - name: Install extensions
+      when: code_extensions_list | default("") | length > 0
+      block:
+      - name: Download extension files for VSCode
+        get_url:
+          url: "{{ item.url }}"
+          dest: "/home/codeserver/.local/share/code-server/extensions/{{ item.filename }}"
+          owner: codeserver
+          group: root
+        loop: "{{ code_extensions_list | list }}"
+        register: r_download_extension
+        until: r_download_extension is not failed
+        retries: 5
+
+      - name: Install VSCode extensions
+        command: "/bin/code-server --install-extension /home/codeserver/.local/share/code-server/extensions/{{ item.filename }}"
+        loop: "{{ code_extensions_list | list }}"
+        ignore_errors: true
+        register: r_install_extension
+        until: r_install_extension is not failed
+        retries: 5
+
+    - name: Create .init_complete file
+      copy:
+        content: ""
+        dest: "/home/codeserver/.init_complete"
+        force: true
+        owner: codeserver
+        group: root
+        mode: 0660
