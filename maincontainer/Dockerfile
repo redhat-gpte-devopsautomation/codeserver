@@ -44,10 +44,6 @@ RUN adduser codeserver --home-dir=${CODE_SERVER_HOME} && \
     chmod -R g=u ${CODE_SERVER_HOME} /etc/passwd && \
     chmod +x /usr/bin/run-code-server.sh
 
-COPY bashrc /home/codeserver/.bashrc
-RUN chmod 660 /home/codeserver/.bashrc && \
-    chown codeserver /home/codeserver/.bashrc
-
 USER codeserver
 WORKDIR ${CODE_SERVER_HOME}
 VOLUME ${CODE_SERVER_HOME}

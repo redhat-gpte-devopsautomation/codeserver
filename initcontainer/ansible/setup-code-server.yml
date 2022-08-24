@@ -60,6 +60,14 @@
         group: root
         mode: 0664
 
+    - name: Set up .bashrc
+      ansible.builtin.copy:
+        src: bashrc
+        dest: "~/.bashrc"
+        owner: codeserver
+        group: root
+        mode: 0664
+
     - name: Setup Git Repos
       when: code_repos_list | default("") | length > 0
       block:
