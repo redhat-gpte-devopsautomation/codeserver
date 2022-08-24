@@ -4,7 +4,7 @@ FROM registry.access.redhat.com/ubi8/ubi:latest
 # Software versions
 ENV CODE_SERVER_VERSION="4.6.0"
 ENV MAVEN_VERSION="3.8.6"
-ENV OCP_VERSION="4.10"
+ENV OCP_VERSION="4.11"
 
 # Directories
 ENV CODE_SERVER_HOME=/home/codeserver
