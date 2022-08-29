@@ -5,6 +5,7 @@ FROM registry.access.redhat.com/ubi8/ubi:latest
 ENV CODE_SERVER_VERSION="4.6.0"
 ENV MAVEN_VERSION="3.8.6"
 ENV OCP_VERSION="4.11"
+ENV JAVA_VERSION="11"
 
 # Directories
 ENV CODE_SERVER_HOME=/home/codeserver
@@ -14,13 +15,13 @@ LABEL name="Code Server - Developer IDE" \
       io.k8s.display-name="Code Server - Developer IDE" \
       io.openshift.expose-services="8080,codeserver" \
       io.openshift.tags="codeserver" \
-      build-date="2022-08-24" \
+      build-date="2022-08-29" \
       version=$CODE_SERVER_VERSION \
       release="1" \
       maintainer="Wolfgang Kulhanek <wkulhanek@redhat.com>"
 
 RUN dnf -y update && \
-    dnf -y install sudo git tar wget java-11-openjdk && \
+    dnf -y install sudo git tar wget java-${JAVA_VERSION}-openjdk java-${JAVA_VERSION}-openjdk-devel && \
     dnf -y install https://github.com/coder/code-server/releases/download/v${CODE_SERVER_VERSION}/code-server-${CODE_SERVER_VERSION}-amd64.rpm && \
     dnf -y install https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm && \
     rm -rf /var/cache/dnf /root/.cache
