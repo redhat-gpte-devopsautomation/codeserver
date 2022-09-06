@@ -2,12 +2,12 @@
 FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
 
 # Software versions
-ENV CODE_SERVER_VERSION="4.6.0"
+ENV CODE_SERVER_VERSION="4.6.1"
 
 LABEL name="Code Server - Developer IDE - Init Container" \
       vendor="Code Server" \
       io.k8s.display-name="Code Server - Developer IDE - Init Container" \
-      build-date="2022-08-24" \
+      build-date="2022-09-06" \
       version=$CODE_SERVER_VERSION \
       release="1" \
       maintainer="Wolfgang Kulhanek <wkulhanek@redhat.com>"
