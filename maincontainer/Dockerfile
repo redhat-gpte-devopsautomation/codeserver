@@ -2,7 +2,7 @@
 FROM registry.access.redhat.com/ubi8/ubi:latest
 
 # Software versions
-ENV CODE_SERVER_VERSION="4.7.0"
+ENV CODE_SERVER_VERSION="4.7.1"
 ENV MAVEN_VERSION="3.8.6"
 ENV OCP_VERSION="4.11"
 ENV JAVA_VERSION="11"
