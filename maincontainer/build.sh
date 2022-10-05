@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=v4.7.0
+VERSION=v4.7.1
 JAVA_VERSION=11
 podman build . -t quay.io/gpte-devops-automation/codeserver:${VERSION}-java${JAVA_VERSION}
 podman tag quay.io/gpte-devops-automation/codeserver:${VERSION}-java${JAVA_VERSION} quay.io/gpte-devops-automation/codeserver:latest
