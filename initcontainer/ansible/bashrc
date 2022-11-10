@@ -1,4 +1,4 @@
 # .bashrc
 
-export PS1="$(pwd)> "
+export PS1="\w $ "
 
