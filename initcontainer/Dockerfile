@@ -7,7 +7,7 @@ ENV CODE_SERVER_VERSION="4.11.0"
 LABEL name="Code Server - Developer IDE - Init Container" \
       vendor="Code Server" \
       io.k8s.display-name="Code Server - Developer IDE - Init Container" \
-      build-date="2023-03-21" \
+      build-date="2023-04-10" \
       version=$CODE_SERVER_VERSION \
       release="1" \
       maintainer="Wolfgang Kulhanek <wkulhanek@redhat.com>"
@@ -37,5 +37,4 @@ WORKDIR /home/codeserver
 VOLUME /home/codeserver
 
 ENTRYPOINT ["/usr/bin/setup-code-server.sh"]
-
 CMD ["ansible-playbook", "/var/ansible/setup-code-server.yml"]

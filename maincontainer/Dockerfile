@@ -15,7 +15,7 @@ LABEL name="Code Server - Developer IDE" \
       io.k8s.display-name="Code Server - Developer IDE" \
       io.openshift.expose-services="8080,codeserver" \
       io.openshift.tags="codeserver" \
-      build-date="2023-03-21" \
+      build-date="2023-04-10" \
       version=$CODE_SERVER_VERSION \
       release="1" \
       maintainer="Wolfgang Kulhanek <wkulhanek@redhat.com>"
@@ -23,7 +23,6 @@ LABEL name="Code Server - Developer IDE" \
 RUN dnf -y update && \
     dnf -y install sudo git tar wget java-${JAVA_VERSION}-openjdk java-${JAVA_VERSION}-openjdk-devel && \
     dnf -y install https://github.com/coder/code-server/releases/download/v${CODE_SERVER_VERSION}/code-server-${CODE_SERVER_VERSION}-amd64.rpm && \
-    dnf -y install https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm && \
     rm -rf /var/cache/dnf /root/.cache
 
 # Install Maven
@@ -52,6 +51,4 @@ VOLUME ${CODE_SERVER_HOME}
 EXPOSE 8080
 
 ENTRYPOINT ["/usr/bin/run-code-server.sh"]
-
-# CMD ["code-server", "--config", "/home/codeserver/.config/code-server/config.yaml", "--user-data-dir", "/home/codeserver/repos/.local/share/code-server/User"]
 CMD ["code-server"]
