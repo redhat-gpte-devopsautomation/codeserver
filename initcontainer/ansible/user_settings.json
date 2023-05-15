@@ -1,5 +1,5 @@
 {
-  "window.menuBarVisibility": "classic",
+  "window.menuBarVisibility": "visible",
   "workbench.startupEditor": "none",
   "git.confirmSync": false,
   "workbench.enableExperiments": false,
