@@ -1,5 +1,6 @@
-# Use Red Hat Universal Base Image 8
-FROM registry.access.redhat.com/ubi8/ubi:latest
+
+# Use Execution Environment image based on Red Hat Universal Base Image 8
+FROM quay.io/agnosticd/ee-multicloud:latest
 
 # Software versions
 ENV CODE_SERVER_VERSION="4.12.0"
@@ -20,8 +21,11 @@ LABEL name="Code Server - Developer IDE" \
       release="1" \
       maintainer="Wolfgang Kulhanek <wkulhanek@redhat.com>"
 
-RUN dnf -y update && \
-    dnf -y install sudo git tar wget java-${JAVA_VERSION}-openjdk java-${JAVA_VERSION}-openjdk-devel && \
+#Install chrome for Unit Tests
+COPY *.repo /etc/yum.repos.d/
+RUN dnf -y install xdg-utils liberation-fonts google-chrome && dnf clean all
+
+RUN dnf -y install sudo git tar wget java-${JAVA_VERSION}-openjdk java-${JAVA_VERSION}-openjdk-devel && \
     dnf -y install https://github.com/coder/code-server/releases/download/v${CODE_SERVER_VERSION}/code-server-${CODE_SERVER_VERSION}-amd64.rpm && \
     rm -rf /var/cache/dnf /root/.cache
 
