@@ -37,8 +37,8 @@ RUN wget -O /tmp/oc.tar.gz https://mirror.openshift.com/pub/openshift-v4/x86_64/
     rm /tmp/oc.tar.gz
 
 # Install GitSign
-RUN wget -O /tmp/gitsign_0.3.0_linux_amd64.rpm https://github.com/sigstore/gitsign/releases/download/v0.3.0/gitsign_0.3.0_linux_amd64.rpm
-    rpm -ivh /tmp/gitsign_0.3.0_linux_amd64.rpm
+RUN wget -O /tmp/gitsign_0.3.0_linux_amd64.rpm https://github.com/sigstore/gitsign/releases/download/v0.3.0/gitsign_0.3.0_linux_amd64.rpm && \
+    rpm -ivh /tmp/gitsign_0.3.0_linux_amd64.rpm && \
     rm /tmp/gitsign_0.3.0_linux_amd64.rpm
 
 COPY run-code-server.sh /usr/bin/run-code-server.sh
