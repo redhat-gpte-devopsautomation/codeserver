@@ -2,7 +2,7 @@
 FROM registry.access.redhat.com/ubi8/ubi:latest
 
 # Software versions
-ENV CODE_SERVER_VERSION="4.13.0"
+ENV CODE_SERVER_VERSION="4.14.0"
 ENV MAVEN_VERSION="3.8.8"
 ENV OCP_VERSION="4.12"
 ENV JAVA_VERSION="11"
@@ -35,6 +35,11 @@ RUN wget -O /tmp/maven.tar.gz https://dlcdn.apache.org/maven/maven-3/${MAVEN_VER
 RUN wget -O /tmp/oc.tar.gz https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/stable-${OCP_VERSION}/openshift-client-linux.tar.gz && \
     tar -C /usr/bin -zxvf /tmp/oc.tar.gz && \
     rm /tmp/oc.tar.gz
+
+# Install GitSign
+RUN wget -O /tmp/gitsign_0.3.0_linux_amd64.rpm https://github.com/sigstore/gitsign/releases/download/v0.3.0/gitsign_0.3.0_linux_amd64.rpm
+    rpm -ivh /tmp/gitsign_0.3.0_linux_amd64.rpm
+    rm /tmp/gitsign_0.3.0_linux_amd64.rpm
 
 COPY run-code-server.sh /usr/bin/run-code-server.sh
 
