@@ -21,7 +21,7 @@ LABEL name="Code Server - Developer IDE" \
       maintainer="Wolfgang Kulhanek <wkulhanek@redhat.com>"
 
 RUN dnf -y update && \
-    dnf -y install sudo git jq tar wget java-${JAVA_VERSION}-openjdk java-${JAVA_VERSION}-openjdk-devel && \
+    dnf -y install sudo git jq tar wget java-${JAVA_VERSION}-openjdk java-${JAVA_VERSION}-openjdk-devel pinentry && \
     dnf -y install https://github.com/coder/code-server/releases/download/v${CODE_SERVER_VERSION}/code-server-${CODE_SERVER_VERSION}-amd64.rpm && \
     rm -rf /var/cache/dnf /root/.cache
 
@@ -35,11 +35,6 @@ RUN wget -O /tmp/maven.tar.gz https://dlcdn.apache.org/maven/maven-3/${MAVEN_VER
 RUN wget -O /tmp/oc.tar.gz https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/stable-${OCP_VERSION}/openshift-client-linux.tar.gz && \
     tar -C /usr/bin -zxvf /tmp/oc.tar.gz && \
     rm /tmp/oc.tar.gz
-
-# Install GitSign
-RUN wget -O /tmp/gitsign_0.3.0_linux_amd64.rpm https://github.com/sigstore/gitsign/releases/download/v0.3.0/gitsign_0.3.0_linux_amd64.rpm && \
-    rpm -ivh /tmp/gitsign_0.3.0_linux_amd64.rpm && \
-    rm /tmp/gitsign_0.3.0_linux_amd64.rpm
 
 COPY run-code-server.sh /usr/bin/run-code-server.sh
 
