@@ -2,9 +2,9 @@
 FROM registry.access.redhat.com/ubi8/ubi:latest
 
 # Software versions
-ENV CODE_SERVER_VERSION="4.13.0"
+ENV CODE_SERVER_VERSION="4.14.0"
 ENV MAVEN_VERSION="3.8.8"
-ENV OCP_VERSION="4.12"
+ENV OCP_VERSION="4.13"
 ENV JAVA_VERSION="11"
 
 # Directories
@@ -15,7 +15,7 @@ LABEL name="Code Server - Developer IDE" \
       io.k8s.display-name="Code Server - Developer IDE" \
       io.openshift.expose-services="8080,codeserver" \
       io.openshift.tags="codeserver" \
-      build-date="2023-05-20" \
+      build-date="2023-06-18" \
       version=$CODE_SERVER_VERSION \
       release="1" \
       maintainer="Wolfgang Kulhanek <wkulhanek@redhat.com>"
