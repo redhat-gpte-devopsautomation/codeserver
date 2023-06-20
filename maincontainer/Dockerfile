@@ -21,7 +21,7 @@ LABEL name="Code Server - Developer IDE" \
       maintainer="Wolfgang Kulhanek <wkulhanek@redhat.com>"
 
 RUN dnf -y update && \
-    dnf -y install sudo git jq tar wget java-${JAVA_VERSION}-openjdk java-${JAVA_VERSION}-openjdk-devel pinentry && \
+    dnf -y install sudo git jq tar wget diffutils java-${JAVA_VERSION}-openjdk java-${JAVA_VERSION}-openjdk-devel pinentry && \
     dnf -y install https://github.com/coder/code-server/releases/download/v${CODE_SERVER_VERSION}/code-server-${CODE_SERVER_VERSION}-amd64.rpm && \
     rm -rf /var/cache/dnf /root/.cache
 
