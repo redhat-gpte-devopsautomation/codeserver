@@ -23,13 +23,14 @@ podman build . \
   --build-arg MAVEN_VERSION=${MAVEN_VERSION} \
   --build-arg OCP_VERSION=${OCP_VERSION} \
   --build-arg BUILD_DATE=${BUILD_DATE} \
-  --tag quay.io/gpte-devops-automation/codeserver:${IMAGE_VERSION}:latest
+  --tag quay.io/gpte-devops-automation/codeserver:${IMAGE_VERSION}
 
 # Build for Java 11
 JAVA_VERSION=11
 podman build . \
   --build-arg JAVA_VERSION="${JAVA_VERSION}" \
   --build-arg BUILD_DATE=${BUILD_DATE} \
+  --build-arg IMAGE_VERSION=${IMAGE_VERSION}
   --tag quay.io/gpte-devops-automation/codeserver:${IMAGE_VERSION}-java${JAVA_VERSION}
 podman push quay.io/gpte-devops-automation/codeserver:${IMAGE_VERSION}-java${JAVA_VERSION}
 
@@ -38,6 +39,7 @@ JAVA_VERSION=17
 podman build . \
   --build-arg JAVA_VERSION="${JAVA_VERSION}" \
   --build-arg BUILD_DATE=${BUILD_DATE} \
+  --build-arg IMAGE_VERSION=${IMAGE_VERSION}
   --tag quay.io/gpte-devops-automation/codeserver:${IMAGE_VERSION}-java${JAVA_VERSION}
 podman push quay.io/gpte-devops-automation/codeserver:${IMAGE_VERSION}-java${JAVA_VERSION}
 
@@ -46,6 +48,7 @@ JAVA_VERSION=21
 podman build . \
   --build-arg JAVA_VERSION="${JAVA_VERSION}" \
   --build-arg BUILD_DATE=${BUILD_DATE} \
+  --build-arg IMAGE_VERSION=${IMAGE_VERSION}
   --tag quay.io/gpte-devops-automation/codeserver:${IMAGE_VERSION}-java${JAVA_VERSION}
 podman push quay.io/gpte-devops-automation/codeserver:${IMAGE_VERSION}-java${JAVA_VERSION}
 podman tag quay.io/gpte-devops-automation/codeserver:${IMAGE_VERSION}-java${JAVA_VERSION} quay.io/gpte-devops-automation/codeserver:latest

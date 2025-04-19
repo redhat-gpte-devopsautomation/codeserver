@@ -1,9 +1,10 @@
-# Use base image without Java
-FROM quay.io/gpte-devops-automation/codeserver:${IMAGE_VERSION}:latest
-
 # Software versions
 ARG JAVA_VERSION="21"
 ARG BUILD_DATE="2025-04-19"
+ARG IMAGE_VERSION=v4.99.0
+
+# Use base image without Java
+FROM quay.io/gpte-devops-automation/codeserver:${IMAGE_VERSION}
 
 LABEL name="Code Server - Developer IDE" \
       vendor="Code Server" \
@@ -11,7 +12,7 @@ LABEL name="Code Server - Developer IDE" \
       io.openshift.expose-services="8080,codeserver" \
       io.openshift.tags="codeserver" \
       build-date=$BUILD_DATE \
-      version=$CODE_SERVER_VERSION \
+      version=$IMAGE_VERSION \
       java-version=$JAVA_VERSION
       release="1" \
       maintainer="Wolfgang Kulhanek <wkulhanek@redhat.com>"
