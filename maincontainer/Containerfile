@@ -1,15 +1,9 @@
-# Use Red Hat Universal Base Image 9
-FROM registry.access.redhat.com/ubi9/ubi:latest
+# Use base image without Java
+FROM quay.io/gpte-devops-automation/codeserver:${IMAGE_VERSION}:latest
 
 # Software versions
-ARG CODE_SERVER_VERSION="4.18.0"
-ARG MAVEN_VERSION="3.8.8"
-ARG OCP_VERSION="4.13"
-ARG JAVA_VERSION="11"
-ARG BUILD_DATE="2023-10-01"
-
-# Directories
-ENV CODE_SERVER_HOME=/home/codeserver
+ARG JAVA_VERSION="21"
+ARG BUILD_DATE="2025-04-19"
 
 LABEL name="Code Server - Developer IDE" \
       vendor="Code Server" \
@@ -18,38 +12,12 @@ LABEL name="Code Server - Developer IDE" \
       io.openshift.tags="codeserver" \
       build-date=$BUILD_DATE \
       version=$CODE_SERVER_VERSION \
+      java-version=$JAVA_VERSION
       release="1" \
       maintainer="Wolfgang Kulhanek <wkulhanek@redhat.com>"
 
-RUN dnf -y update && \
-    dnf -y install sudo git jq tar wget diffutils java-${JAVA_VERSION}-openjdk java-${JAVA_VERSION}-openjdk-devel pinentry tzdata-java && \
-    dnf -y install https://github.com/coder/code-server/releases/download/v${CODE_SERVER_VERSION}/code-server-${CODE_SERVER_VERSION}-amd64.rpm && \
+USER root
+RUN dnf -y install java-${JAVA_VERSION}-openjdk java-${JAVA_VERSION}-openjdk-devel \
     rm -rf /var/cache/dnf /root/.cache
 
-# Install Maven
-RUN wget -O /tmp/maven.tar.gz https://dlcdn.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz && \
-    mkdir -p /usr/local/maven && tar -C /usr/local/maven --strip-components=1 -xzvf /tmp/maven.tar.gz && \
-    ln -s /usr/local/maven/bin/mvn /usr/local/bin/mvn && \
-    rm /tmp/maven.tar.gz
-
-# Install OC CLI
-RUN wget -O /tmp/oc.tar.gz https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/stable-${OCP_VERSION}/openshift-client-linux.tar.gz && \
-    tar -C /usr/bin -zxvf /tmp/oc.tar.gz && \
-    rm /tmp/oc.tar.gz
-
-COPY run-code-server.sh /usr/bin/run-code-server.sh
-
-RUN adduser codeserver --home-dir=${CODE_SERVER_HOME} && \
-    chmod 770 ${CODE_SERVER_HOME} && \
-    chgrp 0 ${CODE_SERVER_HOME} && \
-    chmod -R g=u ${CODE_SERVER_HOME} /etc/passwd && \
-    chmod +x /usr/bin/run-code-server.sh
-
 USER codeserver
-WORKDIR ${CODE_SERVER_HOME}
-VOLUME ${CODE_SERVER_HOME}
-
-EXPOSE 8080
-
-ENTRYPOINT ["/usr/bin/run-code-server.sh"]
-CMD ["code-server"]
