@@ -1,5 +1,5 @@
 # Use Red Hat Universal Base Image 9
-FROM registry.access.redhat.com/ubi9/ubi:latest
+FROM registry.access.redhat.com/ubi9:latest
 
 # Software versions
 ARG CODE_SERVER_VERSION="4.99.0"
