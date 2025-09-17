@@ -1,9 +1,12 @@
 #!/bin/bash
-CODE_SERVER_VERSION="4.103.2"
+CODE_SERVER_VERSION="4.104.0"
 IMAGE_VERSION="v${CODE_SERVER_VERSION}"
 MAVEN_VERSION="3.9.11"
 OCP_VERSION="4.19"
 BUILD_DATE=$(date +"%Y-%m-%d")
+
+podman pull registry.access.redhat.com/ubi9/ubi-minimal:latest
+podman pull registry.access.redhat.com/ubi9:latest
 
 cd initcontainer
 podman build . \
