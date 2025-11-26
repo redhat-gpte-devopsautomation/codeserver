@@ -2,7 +2,7 @@
 CODE_SERVER_VERSION="4.106.2"
 IMAGE_VERSION="v${CODE_SERVER_VERSION}"
 MAVEN_VERSION="3.9.11"
-OCP_VERSION="4.19"
+OCP_VERSION="4.20"
 BUILD_DATE=$(date +"%Y-%m-%d")
 
 podman pull registry.access.redhat.com/ubi9/ubi-minimal:latest
