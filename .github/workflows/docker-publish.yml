@@ -1,0 +1,202 @@
+name: Build and publish Code Server
+
+on:
+  push:
+    tags:
+      - "[0-9]*.[0-9]*.[0-9]*"
+      - "v[0-9]*.[0-9]*.[0-9]*"
+
+env:
+  REGISTRY: quay.io
+  IMAGE_INIT: quay.io/gpte-devops-automation/codeserver-init
+  IMAGE_BASE: quay.io/gpte-devops-automation/codeserver
+
+jobs:
+  resolve-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      image_version: ${{ steps.version.outputs.image_version }}
+      build_date: ${{ steps.version.outputs.build_date }}
+      maven_version: ${{ steps.version.outputs.maven_version }}
+      ocp_version: ${{ steps.version.outputs.ocp_version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Resolve version
+        id: version
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if [[ ! "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "::error::Expected a version in X.Y.Z or vX.Y.Z format."
+            exit 1
+          fi
+          maven_version=$(sed -n 's/^MAVEN_VERSION="\([^"]*\)"/\1/p' build.sh)
+          ocp_version=$(sed -n 's/^OCP_VERSION="\([^"]*\)"/\1/p' build.sh)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "image_version=v${version}" >> "$GITHUB_OUTPUT"
+          echo "build_date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+          echo "maven_version=$maven_version" >> "$GITHUB_OUTPUT"
+          echo "ocp_version=$ocp_version" >> "$GITHUB_OUTPUT"
+
+  build-init:
+    runs-on: ubuntu-latest
+    needs: resolve-version
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: 'v3.1.3'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to Quay
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_ROBOT_TOKEN }}
+
+      - name: Build and push init container
+        id: build-and-push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: initcontainer
+          file: initcontainer/Containerfile
+          platforms: linux/amd64
+          build-args: |
+            CODE_SERVER_VERSION=${{ needs.resolve-version.outputs.version }}
+            BUILD_DATE=${{ needs.resolve-version.outputs.build_date }}
+          push: true
+          tags: |
+            ${{ env.IMAGE_INIT }}:${{ needs.resolve-version.outputs.image_version }}
+            ${{ env.IMAGE_INIT }}:latest
+          cache-from: type=gha,scope=init
+          cache-to: type=gha,mode=max,scope=init
+
+      - name: Sign init container
+        env:
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+        run: cosign sign --yes "${{ env.IMAGE_INIT }}@${DIGEST}"
+
+  build-base:
+    runs-on: ubuntu-latest
+    needs: resolve-version
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: 'v3.1.3'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to Quay
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_ROBOT_TOKEN }}
+
+      - name: Build and push base container
+        id: build-and-push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: maincontainer
+          file: maincontainer/Containerfile-base
+          platforms: linux/amd64
+          build-args: |
+            CODE_SERVER_VERSION=${{ needs.resolve-version.outputs.version }}
+            MAVEN_VERSION=${{ needs.resolve-version.outputs.maven_version }}
+            OCP_VERSION=${{ needs.resolve-version.outputs.ocp_version }}
+            BUILD_DATE=${{ needs.resolve-version.outputs.build_date }}
+          push: true
+          tags: ${{ env.IMAGE_BASE }}:${{ needs.resolve-version.outputs.image_version }}
+          cache-from: type=gha,scope=base
+          cache-to: type=gha,mode=max,scope=base
+
+      - name: Sign base container
+        env:
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+        run: cosign sign --yes "${{ env.IMAGE_BASE }}@${DIGEST}"
+
+  build-java:
+    runs-on: ubuntu-latest
+    needs: [resolve-version, build-base]
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      matrix:
+        java_version: [11, 17, 21]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: 'v3.1.3'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to Quay
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_ROBOT_TOKEN }}
+
+      - name: Compute image tags
+        id: tags
+        shell: bash
+        run: |
+          VER="${{ needs.resolve-version.outputs.image_version }}"
+          JAVA="${{ matrix.java_version }}"
+          tags="${{ env.IMAGE_BASE }}:${VER}-java${JAVA}"
+          if [[ "$JAVA" == "21" ]]; then
+            tags="${tags}
+          ${{ env.IMAGE_BASE }}:latest"
+          fi
+          {
+            echo "tags<<EOF"
+            echo "$tags"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build and push java${{ matrix.java_version }} container
+        id: build-and-push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: maincontainer
+          file: maincontainer/Containerfile
+          platforms: linux/amd64
+          build-args: |
+            IMAGE_VERSION=${{ needs.resolve-version.outputs.image_version }}
+            JAVA_VERSION=${{ matrix.java_version }}
+            BUILD_DATE=${{ needs.resolve-version.outputs.build_date }}
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          cache-from: type=gha,scope=java${{ matrix.java_version }}
+          cache-to: type=gha,mode=max,scope=java${{ matrix.java_version }}
+
+      - name: Sign java${{ matrix.java_version }} container
+        env:
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+        run: cosign sign --yes "${{ env.IMAGE_BASE }}@${DIGEST}"

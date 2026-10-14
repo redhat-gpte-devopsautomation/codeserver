@@ -47,9 +47,33 @@ This repository contains two containers sharing a Persistent Volume Claim for st
   value: '[{"filename":"auchenberg.vscode-browser-preview-0.7.2.vsix", "url": "https://gpte-public.s3.amazonaws.com/vscode-plugins/auchenberg.vscode-browser-preview-0.7.2.vsix"}]'
 ----
 
+== Releasing
+
+Images are built and published automatically to `quay.io/gpte-devops-automation` by GitHub Actions when a version tag is pushed.
+
+. Update `CODE_SERVER_VERSION` (and optionally `MAVEN_VERSION`/`OCP_VERSION`) in `build.sh`.
+. Commit the change: `git commit -am "Updated for Codeserver vX.Y.Z"`
+. Tag and push:
++
+[source,bash]
+----
+git tag vX.Y.Z
+git push origin main --tags
+----
+
+The workflow builds five images in parallel where possible:
+
+* `codeserver-init:vX.Y.Z` and `codeserver-init:latest`
+* `codeserver:vX.Y.Z` (base, no Java)
+* `codeserver:vX.Y.Z-java11`, `codeserver:vX.Y.Z-java17`, `codeserver:vX.Y.Z-java21`
+* `codeserver:latest` (alias for the java21 image)
+
+All images are signed with https://docs.sigstore.dev/cosign/overview/[cosign].
+The workflow requires `QUAY_USERNAME` and `QUAY_ROBOT_TOKEN` secrets configured in the repository settings.
+
 == Building
 
-To build each container image a `build.sh` shell script is provided in the respective subdirectory. Adjust the script with your registry URL, log into your registry and simply run the build script. Note that the build script uses `podman` but it should also work with `docker`.
+To build each container image locally, a `build.sh` shell script is provided. Adjust the script with your registry URL, log into your registry and simply run the build script. Note that the build script uses `podman` but it should also work with `docker`.
 
 == Deploying
 
